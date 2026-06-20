@@ -28,7 +28,11 @@ import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler
 import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.RemotePlayerTrackerSystem;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
+#if MC_VER >= MC_26_2
+import xaero.lib.client.graphics.XaeroBufferProvider;
+#else
 import net.minecraft.client.renderer.MultiBufferSource;
+#endif
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -54,7 +58,10 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 @Pseudo
 @Mixin(PlayerTrackerMinimapElementRenderer.class)
 public class PlayerTrackerMinimapElementRendererMixin {
-    #if MC_VER >= MC_1_21_9
+    #if MC_VER >= MC_26_2
+    @WrapOperation(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/lib/client/graphics/XaeroBufferProvider;)Z",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;name()Ljava/lang/String;"))
+    #elif MC_VER >= MC_1_21_9
     @WrapOperation(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
             at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;name()Ljava/lang/String;"))
     #elif MC_VER >= MC_1_21_6
@@ -75,7 +82,11 @@ public class PlayerTrackerMinimapElementRendererMixin {
         }
     }
 
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_26_2
+    @Inject(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/lib/client/graphics/XaeroBufferProvider;)Z",
+            at = @At(value = "HEAD"), cancellable = true)
+    private void cancel(PlayerTrackerMinimapElement<?> e, boolean highlighted, boolean outOfBounds, double optionalDepth, float optionalScale, double partialX, double partialY, MinimapElementRenderInfo renderInfo, MinimapElementGraphics guiGraphics, XaeroBufferProvider xaeroBufferProvider, CallbackInfoReturnable<Boolean> cir) {
+    #elif MC_VER >= MC_1_21_6
     @Inject(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
             at = @At(value = "HEAD"), cancellable = true)
     private void cancel(PlayerTrackerMinimapElement<?> e, boolean highlighted, boolean outOfBounds, double optionalDepth, float optionalScale, double partialX, double partialY, MinimapElementRenderInfo renderInfo, MinimapElementGraphics guiGraphics, MultiBufferSource.BufferSource vanillaBufferSource, CallbackInfoReturnable<Boolean> cir) {

@@ -23,13 +23,18 @@ package de.the_build_craft.maplink.mixins.fabric.mods.xaerominimap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.waypoints.TempWaypoint;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
 import net.minecraft.client.Minecraft;
+#if MC_VER >= MC_26_2
+import xaero.lib.client.graphics.XaeroBufferProvider;
+#else
 import net.minecraft.client.renderer.MultiBufferSource;
+#endif
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -102,7 +107,10 @@ public class WaypointWorldRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
-    #if MC_VER >= MC_1_21_11
+    #if MC_VER >= MC_26_2
+    @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/lib/client/graphics/font/util/FontUtils;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLxaero/lib/client/graphics/XaeroBufferProvider;)V"))
+    private void dontDrawSymbolStringForCustomIcons(PoseStack matrices, String symbol, float x, float y, int color, boolean shadow, XaeroBufferProvider renderTypeBuffer, Operation<Void> original, @Local(argsOnly = true) Waypoint w) {
+    #elif MC_VER >= MC_1_21_11
     @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource;)V"))
     private void dontDrawSymbolStringForCustomIcons(PoseStack matrices, String symbol, float x, float y, int color, boolean shadow, MultiBufferSource renderTypeBuffer, Operation<Void> original, Waypoint w) {
     #else
@@ -141,8 +149,13 @@ public class WaypointWorldRendererMixin {
         }
     }
 
+    #if MC_VER >= MC_26_2
+    @Inject(method = "postRender", at = @At("HEAD"))
+    private void postRender(MinimapElementRenderInfo renderInfo, XaeroBufferProvider xaeroBufferProvider, MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers, CallbackInfo ci) {
+    #else
     @Inject(method = "postRender", at = @At("HEAD"))
     private void postRender(MinimapElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers, CallbackInfo ci) {
+    #endif
         XaeroClientMapHandler.xaeroMiniMapSupport.drawAllCustomIcons();
     }
 }

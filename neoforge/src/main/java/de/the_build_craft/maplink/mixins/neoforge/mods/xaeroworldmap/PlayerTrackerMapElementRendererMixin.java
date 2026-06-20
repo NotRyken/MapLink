@@ -30,7 +30,11 @@ import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+#if MC_VER >= MC_26_2
+import xaero.lib.client.graphics.XaeroBufferProvider;
+#else
 import net.minecraft.client.renderer.MultiBufferSource;
+#endif
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -57,7 +61,10 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 @Pseudo
 @Mixin(PlayerTrackerMapElementRenderer.class)
 public class PlayerTrackerMapElementRendererMixin {
-    #if MC_VER >= MC_1_21_9
+    #if MC_VER >= MC_26_2
+    @WrapOperation(method = "renderElement(Lxaero/map/radar/tracker/PlayerTrackerMapElement;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lxaero/lib/client/graphics/XaeroBufferProvider;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;name()Ljava/lang/String;"))
+    #elif MC_VER >= MC_1_21_9
     @WrapOperation(method = "renderElement(Lxaero/map/radar/tracker/PlayerTrackerMapElement;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
             at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;name()Ljava/lang/String;"))
     #elif MC_VER >= MC_1_21_6
@@ -78,7 +85,11 @@ public class PlayerTrackerMapElementRendererMixin {
         }
     }
 
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_26_2
+    @Inject(method = "renderElement(Lxaero/map/radar/tracker/PlayerTrackerMapElement;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lxaero/lib/client/graphics/XaeroBufferProvider;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
+            at = @At(value = "HEAD"), cancellable = true)
+    private void cancel(PlayerTrackerMapElement<?> e, boolean hovered, double optionalDepth, float optionalScale, double partialX, double partialY, ElementRenderInfo renderInfo, MapElementGraphics guiGraphics, XaeroBufferProvider xaeroBufferProvider, MultiTextureRenderTypeRendererProvider rendererProvider, CallbackInfoReturnable<Boolean> cir) {
+    #elif MC_VER >= MC_1_21_6
     @Inject(method = "renderElement(Lxaero/map/radar/tracker/PlayerTrackerMapElement;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
             at = @At(value = "HEAD"), cancellable = true)
     private void cancel(PlayerTrackerMapElement<?> e, boolean hovered, double optionalDepth, float optionalScale, double partialX, double partialY, ElementRenderInfo renderInfo, MapElementGraphics guiGraphics, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider rendererProvider, CallbackInfoReturnable<Boolean> cir) {

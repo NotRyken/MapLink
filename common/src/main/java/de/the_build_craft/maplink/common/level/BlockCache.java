@@ -119,10 +119,17 @@ public class BlockCache {
 
         BlockState[] extraGlass = new BlockState[]{
                 null,
+                #if MC_VER >= MC_26_2
+                Blocks.STAINED_GLASS.white().defaultBlockState(),
+                Blocks.STAINED_GLASS.lightGray().defaultBlockState(),
+                Blocks.STAINED_GLASS.gray().defaultBlockState(),
+                Blocks.STAINED_GLASS.black().defaultBlockState()
+                #else
                 Blocks.WHITE_STAINED_GLASS.defaultBlockState(),
                 Blocks.LIGHT_GRAY_STAINED_GLASS.defaultBlockState(),
                 Blocks.GRAY_STAINED_GLASS.defaultBlockState(),
                 Blocks.BLACK_STAINED_GLASS.defaultBlockState()
+                #endif
         };
         int[] extraGlassColors = new int[extraGlass.length];
         for (int i = 1; i < extraGlass.length; i++) {

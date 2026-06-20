@@ -32,7 +32,11 @@ import xaero.map.element.MapElementGraphics;
 #elif MC_VER >= MC_1_20_1
 import net.minecraft.client.gui.GuiGraphics;
 #endif
+#if MC_VER >= MC_26_2
+import xaero.lib.client.graphics.XaeroBufferProvider;
+#else
 import net.minecraft.client.renderer.MultiBufferSource;
+#endif
 #if MC_VER >= MC_1_19_4
 import org.joml.Matrix4f;
 #else
@@ -67,7 +71,17 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 @Pseudo
 @Mixin(WaypointRenderer.class)
 public class WaypointRendererMixin {
-    #if MC_VER >= MC_1_21_11
+    #if MC_VER >= MC_26_2
+    @Inject(method = "preRender", at = @At("HEAD"))
+    private void createGuiNearestRenderer(ElementRenderInfo renderInfo, XaeroBufferProvider xaeroBufferProvider, MultiTextureRenderTypeRendererProvider rendererProvider, boolean shadow, CallbackInfo ci) {
+        XaeroClientMapHandler.xaeroWorldMapSupport.createGuiNearestRenderer();
+    }
+
+    @Inject(method = "postRender", at = @At(value = "INVOKE", target = "Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;draw(Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRenderer;)V", shift = At.Shift.AFTER))
+    private void drawGuiNearestRenderer(ElementRenderInfo renderInfo, XaeroBufferProvider xaeroBufferProvider, MultiTextureRenderTypeRendererProvider rendererProvider, boolean shadow, CallbackInfo ci) {
+        XaeroClientMapHandler.xaeroWorldMapSupport.drawGuiNearestRenderer();
+    }
+    #elif MC_VER >= MC_1_21_11
     @Inject(method = "preRender", at = @At("HEAD"))
     private void createGuiNearestRenderer(ElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider rendererProvider, boolean shadow, CallbackInfo ci) {
         XaeroClientMapHandler.xaeroWorldMapSupport.createGuiNearestRenderer();
@@ -161,7 +175,9 @@ public class WaypointRendererMixin {
         }
     }
 
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_26_2
+    @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lxaero/lib/client/graphics/XaeroBufferProvider;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
+    #elif MC_VER >= MC_1_21_6
     @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
     #elif MC_VER >= MC_1_20_1
     @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
@@ -182,7 +198,11 @@ public class WaypointRendererMixin {
                                                      #else
                                                      PoseStack poseStack,
                                                      #endif
+                                                     #if MC_VER >= MC_26_2
+                                                     XaeroBufferProvider xaeroBufferProvider,
+                                                     #else
                                                      MultiBufferSource.BufferSource vanillaBufferSource,
+                                                     #endif
                                                      MultiTextureRenderTypeRendererProvider rendererProvider,
                                                      CallbackInfo ci
     ) {

@@ -24,6 +24,7 @@ package de.the_build_craft.maplink.mixins.neoforge.mods.xaerominimap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
@@ -35,7 +36,11 @@ import xaero.hud.minimap.element.render.MinimapElementGraphics;
 #elif MC_VER >= MC_1_20_1
 import net.minecraft.client.gui.GuiGraphics;
 #endif
+#if MC_VER >= MC_26_2
+import xaero.lib.client.graphics.XaeroBufferProvider;
+#else
 import net.minecraft.client.renderer.MultiBufferSource;
+#endif
 #if MC_VER >= MC_1_19_4
 import org.joml.Matrix4f;
 #else
@@ -195,7 +200,20 @@ public class WaypointsGuiRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
-    #if MC_VER >= MC_1_21_11
+    #if MC_VER >= MC_26_2
+    @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILxaero/lib/client/graphics/XaeroBufferProvider;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
+            at = @At(value = "INVOKE", target = "Lxaero/lib/client/graphics/font/util/FontUtils;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLxaero/lib/client/graphics/XaeroBufferProvider;)V"))
+    private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,
+                                                    String symbol,
+                                                    float x,
+                                                    float y,
+                                                    int color,
+                                                    boolean shadow,
+                                                    XaeroBufferProvider renderTypeBuffer,
+                                                    Operation<Void> original,
+                                                    @Local(argsOnly = true) MinimapElementGraphics guiGraphics,
+                                                    @Local(argsOnly = true) Waypoint w) {
+    #elif MC_VER >= MC_1_21_11
     @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILxaero/lib/client/graphics/XaeroBufferProvider;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
             at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource;)V"))
     private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,
@@ -299,7 +317,11 @@ public class WaypointsGuiRendererMixin {
                         #else
                         PoseStack poseStack,
                         #endif
+                        #if MC_VER >= MC_26_2
+                        XaeroBufferProvider xaeroBufferProvider,
+                        #else
                         MultiBufferSource.BufferSource vanillaBufferSource,
+                        #endif
                         CallbackInfoReturnable<Boolean> cir) {
         if (w instanceof TempWaypoint) {
             WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
@@ -310,8 +332,13 @@ public class WaypointsGuiRendererMixin {
         }
     }
 
+    #if MC_VER >= MC_26_2
+    @Inject(method = "postRender", at = @At("HEAD"))
+    private void callBatchRendering(MinimapElementRenderInfo renderInfo, XaeroBufferProvider xaeroBufferProvider, MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers, CallbackInfo ci) {
+    #else
     @Inject(method = "postRender", at = @At("HEAD"))
     private void callBatchRendering(MinimapElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers, CallbackInfo ci) {
+    #endif
         XaeroClientMapHandler.xaeroMiniMapSupport.drawAllCustomIcons();
     }
 }
