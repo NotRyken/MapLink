@@ -55,7 +55,7 @@ import java.util.concurrent.*;
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
- * Base for all mod loader initializers 
+ * Base for all mod loader initializers
  * and handles most setup.
  *
  * @author James Seibel
@@ -94,21 +94,25 @@ public abstract class AbstractModInitializer
     public static boolean xaeroWorldMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
 
-	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-	
+	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2, (task) -> {
+		Thread thread = new Thread(task);
+		thread.setDaemon(true);
+		return thread;
+	});
+
 	//==================//
 	// abstract methods //
 	//==================//
-	
+
 	protected abstract void createInitialBindings();
 	protected abstract IEventProxy createClientProxy();
 	protected abstract IEventProxy createServerProxy(boolean isDedicated);
 	protected abstract void initializeModCompat();
-	
+
 	//===================//
 	// initialize events //
 	//===================//
-	
+
 	public void onInitializeClient()
 	{
 		LOGGER.info("Initializing " + MOD_NAME);
@@ -139,11 +143,11 @@ public abstract class AbstractModInitializer
 
 		LOGGER.info(MOD_NAME + " Initialized");
 	}
-	
+
 	public void onInitializeServer()
 	{
 		LOGGER.info("Initializing " + MOD_NAME);
-		
+
 		this.startup();//<-- common mod init in here
 		this.printModInfo();
 
@@ -153,7 +157,7 @@ public abstract class AbstractModInitializer
 
 		LOGGER.info(MOD_NAME + " Initialized");
 	}
-	
+
 	//===========================//
 	// inner initializer methods //
 	//===========================//
@@ -167,7 +171,7 @@ public abstract class AbstractModInitializer
 		this.createInitialBindings();
 		//do common mod init here
 	}
-	
+
 	private void printModInfo()
 	{
 		LOGGER.info(MOD_NAME + ", Version: " + VERSION);
@@ -303,7 +307,7 @@ public abstract class AbstractModInitializer
                                 int chunksZ = IntegerArgumentType.getInteger(context, "chunksZ") + 2;
                                 BlockPos center = parseClientPos(context.getArgument("center", Coordinates.class));
                                 String map = StringArgumentType.getString(context, "map");
-                                Thread thread = new Thread(() -> {
+                                Thread thread = Thread.ofVirtual().start(() -> {
                                     Utils.sendToClientChat("converting tiles...");
                                     if (connection.downloadTiles(map, center.getX() >> 4, center.getZ() >> 4, chunksX, chunksZ)) {
                                         Utils.sendToClientChat(Text.literal("Tiles converted. Don't forget to ")
@@ -321,7 +325,6 @@ public abstract class AbstractModInitializer
                                         XaeroClientMapHandler.xaeroWorldMapSupport.clearTiles();
                                     }
                                 });
-                                thread.start();
                                 return 1;
                             }))))));
 
@@ -454,11 +457,11 @@ public abstract class AbstractModInitializer
 			return null;
 		}
 	}
-	
+
 	//================//
 	// helper classes //
 	//================//
-	
+
 	public interface IEventProxy
 	{
 		void registerEvents();

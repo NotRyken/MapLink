@@ -216,7 +216,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
         if (config.general.enableAreaMarkerOverlay) {
             currentlyRasterising = true;
-            currentRasterThread = new Thread(() -> {
+            currentRasterThread = Thread.ofVirtual().start(() -> {
                 for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
                         .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
                     for (long cord : cords.getValue()) {
@@ -229,7 +229,6 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                 if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
                 currentlyRasterising = false;
             });
-            currentRasterThread.start();
         } else {
             chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
             if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
